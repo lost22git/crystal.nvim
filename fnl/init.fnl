@@ -73,20 +73,20 @@
 ;;  :pattern :crystal
 ;;  :key "<Leader>ke"
 ;;  :mode :n
-;;  :data (fn [{: file : line : column : text : open_hover_window}]
+;;  :run (fn [{: file : line : column : text : open_hover_window}]
 ;;          "")}
 
-(fn run [{: data}]
+(fn do_run [{: run}]
   (local (line_number column_number) (get_cursor_location))
-  (data {:file (get_current_file)
-         :line line_number
-         :column column_number
-         :text (get_cursor_text)
-         :open_hover_window open_hover_window}))
+  (run {:file (get_current_file)
+        :line line_number
+        :column column_number
+        :text (get_cursor_text)
+        :open_hover_window open_hover_window}))
 
 (fn add_keymap [item bufid]
   (local {: name : key : mode} item)
-  (vim.keymap.set mode key #(run item) {:buffer bufid :desc name}))
+  (vim.keymap.set mode key #(do_run item) {:buffer bufid :desc name}))
 
 (fn create_autocmd [item]
   (local {: name : event : pattern} item)
@@ -111,6 +111,28 @@
 
   (open_hover_window out title cb))
 
+(fn implementations_on_exit [res cmd open_hover_window]
+  (fn send_to_loclist [items]
+    (local list (vim.tbl_map (fn [item]
+                               (local [file line column]
+                                      (vim.split item ":" true))
+                               {:filename file :lnum line :col column :text ""})
+                             items))
+    (vim.cmd "tabnew")
+    (vim.fn.setloclist 0 list "r")
+    (vim.cmd "lopen | exe \"normal \\<Enter>\""))
+
+  (local items (-> res.stdout
+                   (string.gsub "\027%[.-m" "")
+                   (case (a _) a)
+                   (vim.fn.trim)
+                   (vim.split "\n" true)))
+  (if (< 1 (length items))
+      (send_to_loclist (vim.list_slice items 2))
+      (do
+        (local title (table.concat cmd " "))
+        (open_hover_window "implementation not found" title nil))))
+
 (fn crystal_tool_cmd [subcmd file line column text]
   (case subcmd
     (where (or :context :expand :implementations))
@@ -121,73 +143,84 @@
   ["docr" subcmd (.. "'" (vim.fn.escape text "'") "'")])
 
 (local items
-       [{:name "crystal tool expand"
+       [{:name "crystal tool context"
+         :event :FileType
+         :pattern :crystal
+         :key "<Leader>kc"
+         :mode :n
+         :run (fn [{: file : line : column : text : open_hover_window}]
+                (local cmd (crystal_tool_cmd :context file line column text))
+                (print (table.concat cmd " "))
+                (vim.system cmd {:text true}
+                            #((vim.schedule_wrap on_exit) $ cmd
+                                                          open_hover_window)))}
+        {:name "crystal tool expand"
          :event :FileType
          :pattern :crystal
          :key "<Leader>ke"
          :mode :n
-         :data (fn [{: file : line : column : text : open_hover_window}]
-                 (local cmd (crystal_tool_cmd :expand file line column text))
-                 (print (table.concat cmd " "))
-                 (vim.system cmd {:text true}
-                             #((vim.schedule_wrap on_exit) $ cmd
-                                                           open_hover_window)))}
+         :run (fn [{: file : line : column : text : open_hover_window}]
+                (local cmd (crystal_tool_cmd :expand file line column text))
+                (print (table.concat cmd " "))
+                (vim.system cmd {:text true}
+                            #((vim.schedule_wrap on_exit) $ cmd
+                                                          open_hover_window)))}
         {:name "crystal tool hierarchy"
          :event :FileType
          :pattern :crystal
          :key "<Leader>kh"
          :mode [:n :v]
-         :data (fn [{: file : line : column : text : open_hover_window}]
-                 (local cmd (crystal_tool_cmd :hierarchy file line column text))
-                 (print (table.concat cmd " "))
-                 (vim.system cmd {:text true}
-                             #((vim.schedule_wrap on_exit) $ cmd
-                                                           open_hover_window)))}
+         :run (fn [{: file : line : column : text : open_hover_window}]
+                (local cmd (crystal_tool_cmd :hierarchy file line column text))
+                (print (table.concat cmd " "))
+                (vim.system cmd {:text true}
+                            #((vim.schedule_wrap on_exit) $ cmd
+                                                          open_hover_window)))}
         {:name "crystal tool implementations"
          :event :FileType
          :pattern :crystal
          :key "<Leader>ki"
-         :mode [:n :v]
-         :data (fn [{: file : line : column : text : open_hover_window}]
-                 (local cmd (crystal_tool_cmd :implementations file line column
-                                              text))
-                 (print (table.concat cmd " "))
-                 (vim.system cmd {:text true}
-                             #((vim.schedule_wrap on_exit) $ cmd
-                                                           open_hover_window)))}
+         :mode :n
+         :run (fn [{: file : line : column : text : open_hover_window}]
+                (local cmd (crystal_tool_cmd :implementations file line column
+                                             text))
+                (print (table.concat cmd " "))
+                (vim.system cmd {:text true}
+                            #((vim.schedule_wrap implementations_on_exit) $ cmd
+                                                                          open_hover_window)))}
         {:name "docr info"
          :event :FileType
          :pattern :crystal
          :key "<Leader>k"
          :mode [:n :v]
-         :data (fn [{: _file : _line : _column : text : open_hover_window}]
-                 (local cmd (docr_cmd :info text))
-                 (print (table.concat cmd " "))
-                 (vim.system cmd {:text true}
-                             #((vim.schedule_wrap on_exit) $ cmd
-                                                           open_hover_window)))}
+         :run (fn [{: _file : _line : _column : text : open_hover_window}]
+                (local cmd (docr_cmd :info text))
+                (print (table.concat cmd " "))
+                (vim.system cmd {:text true}
+                            #((vim.schedule_wrap on_exit) $ cmd
+                                                          open_hover_window)))}
         {:name "docr search"
          :event :FileType
          :pattern :crystal
          :key "<Leader>K"
          :mode [:n :v]
-         :data (fn [{: _file : _line : _column : text : open_hover_window}]
-                 (local cmd (docr_cmd :search text))
-                 (print (table.concat cmd " "))
-                 (vim.system cmd {:text true}
-                             #((vim.schedule_wrap on_exit) $ cmd
-                                                           open_hover_window)))}
+         :run (fn [{: _file : _line : _column : text : open_hover_window}]
+                (local cmd (docr_cmd :search text))
+                (print (table.concat cmd " "))
+                (vim.system cmd {:text true}
+                            #((vim.schedule_wrap on_exit) $ cmd
+                                                          open_hover_window)))}
         {:name "docr tree"
          :event :FileType
          :pattern :crystal
          :key "<Leader>kk"
          :mode [:n :v]
-         :data (fn [{: _file : _line : _column : text : open_hover_window}]
-                 (local cmd (docr_cmd :tree text))
-                 (print (table.concat cmd " "))
-                 (vim.system cmd {:text true}
-                             #((vim.schedule_wrap on_exit) $ cmd
-                                                           open_hover_window)))}])
+         :run (fn [{: _file : _line : _column : text : open_hover_window}]
+                (local cmd (docr_cmd :tree text))
+                (print (table.concat cmd " "))
+                (vim.system cmd {:text true}
+                            #((vim.schedule_wrap on_exit) $ cmd
+                                                          open_hover_window)))}])
 
 (local M {})
 (fn M.setup [_config]

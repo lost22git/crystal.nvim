@@ -18,6 +18,7 @@
 
 |mode|key|function|
 |:----|:----|:----|
+| n | <Leader>kc | crystal tool context |
 | n | <Leader>ke | crystal tool expand |
 | n,v | <Leader>kh | crystal tool hierarchy |
 | n | <Leader>ki| crystal tool implementations |
