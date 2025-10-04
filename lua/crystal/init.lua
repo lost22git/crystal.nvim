@@ -1,4 +1,4 @@
--- [nfnl] fnl/init.fnl
+-- [nfnl] fnl/crystal/init.fnl
 local function disable_diagnostic(bufid)
   if vim.diagnostic.is_enabled({bufnr = bufid}) then
     return pcall(vim.diagnostic.enable, false, {bufnr = bufid})
