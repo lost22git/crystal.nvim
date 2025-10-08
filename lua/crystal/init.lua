@@ -23,7 +23,8 @@ local function open_hover_window(text_or_lines, title, callback)
   end
   local bufid = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_lines(bufid, 0, -1, false, lines)
-  local winid = vim.api.nvim_open_win(bufid, true, {title = title, relative = "cursor", row = 1, col = 0, width = max_cols, height = math.min(16, #lines), style = "minimal"})
+  local win_opts = {title = title, relative = "cursor", row = 1, col = 0, width = max_cols, height = math.min(16, #lines), style = "minimal"}
+  local winid = vim.api.nvim_open_win(bufid, true, win_opts)
   disable_diagnostic(bufid)
   vim.bo[bufid]["readonly"] = true
   vim.bo[bufid]["modifiable"] = false
@@ -81,12 +82,14 @@ local function create_autocmd(item)
   local name = item["name"]
   local event = item["event"]
   local pattern = item["pattern"]
+  local opts
   local function _10_(_9_)
     local bufid = _9_["buf"]
     add_keymap(item, bufid)
     return nil
   end
-  return vim.api.nvim_create_autocmd(event, {desc = name, pattern = pattern, callback = _10_})
+  opts = {desc = name, pattern = pattern, callback = _10_}
+  return vim.api.nvim_create_autocmd(event, opts)
 end
 local function on_exit(res, cmd, open_hover_window0)
   local out
@@ -171,7 +174,7 @@ local function _25_(_24_)
   local text = _24_["text"]
   local open_hover_window0 = _24_["open_hover_window"]
   local cmd = crystal_tool_cmd("context", file, line, column, text)
-  print(table.concat(cmd, " "))
+  vim.notify(table.concat(cmd, " "), vim.log.levels.INFO)
   local function _26_(_241)
     return vim.schedule_wrap(on_exit)(_241, cmd, open_hover_window0)
   end
@@ -184,7 +187,7 @@ local function _28_(_27_)
   local text = _27_["text"]
   local open_hover_window0 = _27_["open_hover_window"]
   local cmd = crystal_tool_cmd("expand", file, line, column, text)
-  print(table.concat(cmd, " "))
+  vim.notify(table.concat(cmd, " "), vim.log.levels.INFO)
   local function _29_(_241)
     return vim.schedule_wrap(on_exit)(_241, cmd, open_hover_window0)
   end
@@ -197,7 +200,7 @@ local function _31_(_30_)
   local text = _30_["text"]
   local open_hover_window0 = _30_["open_hover_window"]
   local cmd = crystal_tool_cmd("hierarchy", file, line, column, text)
-  print(table.concat(cmd, " "))
+  vim.notify(table.concat(cmd, " "), vim.log.levels.INFO)
   local function _32_(_241)
     return vim.schedule_wrap(on_exit)(_241, cmd, open_hover_window0)
   end
@@ -210,7 +213,7 @@ local function _34_(_33_)
   local text = _33_["text"]
   local open_hover_window0 = _33_["open_hover_window"]
   local cmd = crystal_tool_cmd("implementations", file, line, column, text)
-  print(table.concat(cmd, " "))
+  vim.notify(table.concat(cmd, " "), vim.log.levels.INFO)
   local function _35_(_241)
     return vim.schedule_wrap(implementations_on_exit)(_241, cmd, open_hover_window0)
   end
@@ -223,7 +226,7 @@ local function _37_(_36_)
   local text = _36_["text"]
   local open_hover_window0 = _36_["open_hover_window"]
   local cmd = docr_cmd("info", text)
-  print(table.concat(cmd, " "))
+  vim.notify(table.concat(cmd, " "), vim.log.levels.INFO)
   local function _38_(_241)
     return vim.schedule_wrap(on_exit)(_241, cmd, open_hover_window0)
   end
@@ -236,7 +239,7 @@ local function _40_(_39_)
   local text = _39_["text"]
   local open_hover_window0 = _39_["open_hover_window"]
   local cmd = docr_cmd("search", text)
-  print(table.concat(cmd, " "))
+  vim.notify(table.concat(cmd, " "), vim.log.levels.INFO)
   local function _41_(_241)
     return vim.schedule_wrap(on_exit)(_241, cmd, open_hover_window0)
   end
@@ -249,7 +252,7 @@ local function _43_(_42_)
   local text = _42_["text"]
   local open_hover_window0 = _42_["open_hover_window"]
   local cmd = docr_cmd("tree", text)
-  print(table.concat(cmd, " "))
+  vim.notify(table.concat(cmd, " "), vim.log.levels.INFO)
   local function _44_(_241)
     return vim.schedule_wrap(on_exit)(_241, cmd, open_hover_window0)
   end

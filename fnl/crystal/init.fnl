@@ -17,14 +17,14 @@
   (local bufid (vim.api.nvim_create_buf false true))
   (vim.api.nvim_buf_set_lines bufid 0 -1 false lines)
   ;; open float window to attach buffer
-  (local winid (vim.api.nvim_open_win bufid true
-                                      {:title title
-                                       :relative :cursor
-                                       :row 1
-                                       :col 0
-                                       :width max_cols
-                                       :height (math.min 16 (length lines))
-                                       :style :minimal}))
+  (local win_opts {:title title
+                   :relative :cursor
+                   :row 1
+                   :col 0
+                   :width max_cols
+                   :height (math.min 16 (length lines))
+                   :style :minimal})
+  (local winid (vim.api.nvim_open_win bufid true win_opts))
   ;; set some local options of buffer and window
   (disable_diagnostic bufid)
   (tset vim.bo bufid :readonly true)
@@ -90,12 +90,12 @@
 
 (fn create_autocmd [item]
   (local {: name : event : pattern} item)
-  (vim.api.nvim_create_autocmd event
-                               {:desc name
-                                :pattern pattern
-                                :callback (fn [{:buf bufid}]
-                                            (add_keymap item bufid)
-                                            nil)}))
+  (local opts {:desc name
+               :pattern pattern
+               :callback (fn [{:buf bufid}]
+                           (add_keymap item bufid)
+                           nil)})
+  (vim.api.nvim_create_autocmd event opts))
 
 ;; === Crystal ===
 
@@ -153,7 +153,7 @@
          :mode :n
          :run (fn [{: file : line : column : text : open_hover_window}]
                 (local cmd (crystal_tool_cmd :context file line column text))
-                (print (table.concat cmd " "))
+                (vim.notify (table.concat cmd " ") vim.log.levels.INFO)
                 (vim.system cmd {:text true}
                             #((vim.schedule_wrap on_exit) $ cmd
                                                           open_hover_window)))}
@@ -164,7 +164,7 @@
          :mode :n
          :run (fn [{: file : line : column : text : open_hover_window}]
                 (local cmd (crystal_tool_cmd :expand file line column text))
-                (print (table.concat cmd " "))
+                (vim.notify (table.concat cmd " ") vim.log.levels.INFO)
                 (vim.system cmd {:text true}
                             #((vim.schedule_wrap on_exit) $ cmd
                                                           open_hover_window)))}
@@ -175,7 +175,7 @@
          :mode [:n :v]
          :run (fn [{: file : line : column : text : open_hover_window}]
                 (local cmd (crystal_tool_cmd :hierarchy file line column text))
-                (print (table.concat cmd " "))
+                (vim.notify (table.concat cmd " ") vim.log.levels.INFO)
                 (vim.system cmd {:text true}
                             #((vim.schedule_wrap on_exit) $ cmd
                                                           open_hover_window)))}
@@ -187,7 +187,7 @@
          :run (fn [{: file : line : column : text : open_hover_window}]
                 (local cmd (crystal_tool_cmd :implementations file line column
                                              text))
-                (print (table.concat cmd " "))
+                (vim.notify (table.concat cmd " ") vim.log.levels.INFO)
                 (vim.system cmd {:text true}
                             #((vim.schedule_wrap implementations_on_exit) $ cmd
                                                                           open_hover_window)))}
@@ -198,7 +198,7 @@
          :mode [:n :v]
          :run (fn [{: _file : _line : _column : text : open_hover_window}]
                 (local cmd (docr_cmd :info text))
-                (print (table.concat cmd " "))
+                (vim.notify (table.concat cmd " ") vim.log.levels.INFO)
                 (vim.system cmd {:text true}
                             #((vim.schedule_wrap on_exit) $ cmd
                                                           open_hover_window)))}
@@ -209,7 +209,7 @@
          :mode [:n :v]
          :run (fn [{: _file : _line : _column : text : open_hover_window}]
                 (local cmd (docr_cmd :search text))
-                (print (table.concat cmd " "))
+                (vim.notify (table.concat cmd " ") vim.log.levels.INFO)
                 (vim.system cmd {:text true}
                             #((vim.schedule_wrap on_exit) $ cmd
                                                           open_hover_window)))}
@@ -220,7 +220,7 @@
          :mode [:n :v]
          :run (fn [{: _file : _line : _column : text : open_hover_window}]
                 (local cmd (docr_cmd :tree text))
-                (print (table.concat cmd " "))
+                (vim.notify (table.concat cmd " ") vim.log.levels.INFO)
                 (vim.system cmd {:text true}
                             #((vim.schedule_wrap on_exit) $ cmd
                                                           open_hover_window)))}])
