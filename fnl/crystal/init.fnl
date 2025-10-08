@@ -113,11 +113,14 @@
 
 (fn implementations_on_exit [res cmd open_hover_window]
   (fn send_to_loclist [items]
-    (local list (vim.tbl_map (fn [item]
-                               (local [file line column]
-                                      (vim.split item ":" true))
-                               {:filename file :lnum line :col column :text ""})
-                             items))
+    (fn to_loclist_item [item]
+      (let [[file line column] (vim.split item ":" true)
+            lnum (tonumber line)
+            col (tonumber column)
+            text (. (vim.fn.readfile file "" lnum) lnum)]
+        {:filename file :lnum lnum :col col :text text}))
+
+    (local list (vim.tbl_map to_loclist_item items))
     (vim.cmd "tabnew")
     (vim.fn.setloclist 0 list "r")
     (vim.cmd "lopen | exe \"normal \\<Enter>\""))

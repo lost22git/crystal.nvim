@@ -117,31 +117,33 @@ local function on_exit(res, cmd, open_hover_window0)
 end
 local function implementations_on_exit(res, cmd, open_hover_window0)
   local function send_to_loclist(items)
-    local list
-    local function _17_(item)
-      local _local_18_ = vim.split(item, ":", true)
-      local file = _local_18_[1]
-      local line = _local_18_[2]
-      local column = _local_18_[3]
-      return {filename = file, lnum = line, col = column, text = ""}
+    local function to_loclist_item(item)
+      local _let_17_ = vim.split(item, ":", true)
+      local file = _let_17_[1]
+      local line = _let_17_[2]
+      local column = _let_17_[3]
+      local lnum = tonumber(line)
+      local col = tonumber(column)
+      local text = vim.fn.readfile(file, "", lnum)[lnum]
+      return {filename = file, lnum = lnum, col = col, text = text}
     end
-    list = vim.tbl_map(_17_, items)
+    local list = vim.tbl_map(to_loclist_item, items)
     vim.cmd("tabnew")
     vim.fn.setloclist(0, list, "r")
     return vim.cmd("lopen | exe \"normal \\<Enter>\"")
   end
   local items
-  local function _21_()
-    local _19_, _20_ = string.gsub(res.stdout, "\27%[.-m", "")
-    if ((nil ~= _19_) and true) then
-      local a = _19_
-      local _ = _20_
+  local function _20_()
+    local _18_, _19_ = string.gsub(res.stdout, "\27%[.-m", "")
+    if ((nil ~= _18_) and true) then
+      local a = _18_
+      local _ = _19_
       return a
     else
       return nil
     end
   end
-  items = vim.split(vim.fn.trim(_21_()), "\n", true)
+  items = vim.split(vim.fn.trim(_20_()), "\n", true)
   if (1 < #items) then
     return send_to_loclist(vim.list_slice(items, 2))
   else
@@ -162,98 +164,98 @@ local function docr_cmd(subcmd, text)
   return {"docr", subcmd, ("'" .. vim.fn.escape(text, "'") .. "'")}
 end
 local items
-local function _26_(_25_)
-  local file = _25_["file"]
-  local line = _25_["line"]
-  local column = _25_["column"]
-  local text = _25_["text"]
-  local open_hover_window0 = _25_["open_hover_window"]
+local function _25_(_24_)
+  local file = _24_["file"]
+  local line = _24_["line"]
+  local column = _24_["column"]
+  local text = _24_["text"]
+  local open_hover_window0 = _24_["open_hover_window"]
   local cmd = crystal_tool_cmd("context", file, line, column, text)
   print(table.concat(cmd, " "))
-  local function _27_(_241)
+  local function _26_(_241)
     return vim.schedule_wrap(on_exit)(_241, cmd, open_hover_window0)
   end
-  return vim.system(cmd, {text = true}, _27_)
+  return vim.system(cmd, {text = true}, _26_)
 end
-local function _29_(_28_)
-  local file = _28_["file"]
-  local line = _28_["line"]
-  local column = _28_["column"]
-  local text = _28_["text"]
-  local open_hover_window0 = _28_["open_hover_window"]
+local function _28_(_27_)
+  local file = _27_["file"]
+  local line = _27_["line"]
+  local column = _27_["column"]
+  local text = _27_["text"]
+  local open_hover_window0 = _27_["open_hover_window"]
   local cmd = crystal_tool_cmd("expand", file, line, column, text)
   print(table.concat(cmd, " "))
-  local function _30_(_241)
+  local function _29_(_241)
     return vim.schedule_wrap(on_exit)(_241, cmd, open_hover_window0)
   end
-  return vim.system(cmd, {text = true}, _30_)
+  return vim.system(cmd, {text = true}, _29_)
 end
-local function _32_(_31_)
-  local file = _31_["file"]
-  local line = _31_["line"]
-  local column = _31_["column"]
-  local text = _31_["text"]
-  local open_hover_window0 = _31_["open_hover_window"]
+local function _31_(_30_)
+  local file = _30_["file"]
+  local line = _30_["line"]
+  local column = _30_["column"]
+  local text = _30_["text"]
+  local open_hover_window0 = _30_["open_hover_window"]
   local cmd = crystal_tool_cmd("hierarchy", file, line, column, text)
   print(table.concat(cmd, " "))
-  local function _33_(_241)
+  local function _32_(_241)
     return vim.schedule_wrap(on_exit)(_241, cmd, open_hover_window0)
   end
-  return vim.system(cmd, {text = true}, _33_)
+  return vim.system(cmd, {text = true}, _32_)
 end
-local function _35_(_34_)
-  local file = _34_["file"]
-  local line = _34_["line"]
-  local column = _34_["column"]
-  local text = _34_["text"]
-  local open_hover_window0 = _34_["open_hover_window"]
+local function _34_(_33_)
+  local file = _33_["file"]
+  local line = _33_["line"]
+  local column = _33_["column"]
+  local text = _33_["text"]
+  local open_hover_window0 = _33_["open_hover_window"]
   local cmd = crystal_tool_cmd("implementations", file, line, column, text)
   print(table.concat(cmd, " "))
-  local function _36_(_241)
+  local function _35_(_241)
     return vim.schedule_wrap(implementations_on_exit)(_241, cmd, open_hover_window0)
   end
-  return vim.system(cmd, {text = true}, _36_)
+  return vim.system(cmd, {text = true}, _35_)
 end
-local function _38_(_37_)
-  local _file = _37_["_file"]
-  local _line = _37_["_line"]
-  local _column = _37_["_column"]
-  local text = _37_["text"]
-  local open_hover_window0 = _37_["open_hover_window"]
+local function _37_(_36_)
+  local _file = _36_["_file"]
+  local _line = _36_["_line"]
+  local _column = _36_["_column"]
+  local text = _36_["text"]
+  local open_hover_window0 = _36_["open_hover_window"]
   local cmd = docr_cmd("info", text)
   print(table.concat(cmd, " "))
-  local function _39_(_241)
+  local function _38_(_241)
     return vim.schedule_wrap(on_exit)(_241, cmd, open_hover_window0)
   end
-  return vim.system(cmd, {text = true}, _39_)
+  return vim.system(cmd, {text = true}, _38_)
 end
-local function _41_(_40_)
-  local _file = _40_["_file"]
-  local _line = _40_["_line"]
-  local _column = _40_["_column"]
-  local text = _40_["text"]
-  local open_hover_window0 = _40_["open_hover_window"]
+local function _40_(_39_)
+  local _file = _39_["_file"]
+  local _line = _39_["_line"]
+  local _column = _39_["_column"]
+  local text = _39_["text"]
+  local open_hover_window0 = _39_["open_hover_window"]
   local cmd = docr_cmd("search", text)
   print(table.concat(cmd, " "))
-  local function _42_(_241)
+  local function _41_(_241)
     return vim.schedule_wrap(on_exit)(_241, cmd, open_hover_window0)
   end
-  return vim.system(cmd, {text = true}, _42_)
+  return vim.system(cmd, {text = true}, _41_)
 end
-local function _44_(_43_)
-  local _file = _43_["_file"]
-  local _line = _43_["_line"]
-  local _column = _43_["_column"]
-  local text = _43_["text"]
-  local open_hover_window0 = _43_["open_hover_window"]
+local function _43_(_42_)
+  local _file = _42_["_file"]
+  local _line = _42_["_line"]
+  local _column = _42_["_column"]
+  local text = _42_["text"]
+  local open_hover_window0 = _42_["open_hover_window"]
   local cmd = docr_cmd("tree", text)
   print(table.concat(cmd, " "))
-  local function _45_(_241)
+  local function _44_(_241)
     return vim.schedule_wrap(on_exit)(_241, cmd, open_hover_window0)
   end
-  return vim.system(cmd, {text = true}, _45_)
+  return vim.system(cmd, {text = true}, _44_)
 end
-items = {{name = "crystal tool context", event = "FileType", pattern = "crystal", key = "<Leader>kc", mode = "n", run = _26_}, {name = "crystal tool expand", event = "FileType", pattern = "crystal", key = "<Leader>ke", mode = "n", run = _29_}, {name = "crystal tool hierarchy", event = "FileType", pattern = "crystal", key = "<Leader>kh", mode = {"n", "v"}, run = _32_}, {name = "crystal tool implementations", event = "FileType", pattern = "crystal", key = "<Leader>ki", mode = "n", run = _35_}, {name = "docr info", event = "FileType", pattern = "crystal", key = "<Leader>k", mode = {"n", "v"}, run = _38_}, {name = "docr search", event = "FileType", pattern = "crystal", key = "<Leader>K", mode = {"n", "v"}, run = _41_}, {name = "docr tree", event = "FileType", pattern = "crystal", key = "<Leader>kk", mode = {"n", "v"}, run = _44_}}
+items = {{name = "crystal tool context", event = "FileType", pattern = "crystal", key = "<Leader>kc", mode = "n", run = _25_}, {name = "crystal tool expand", event = "FileType", pattern = "crystal", key = "<Leader>ke", mode = "n", run = _28_}, {name = "crystal tool hierarchy", event = "FileType", pattern = "crystal", key = "<Leader>kh", mode = {"n", "v"}, run = _31_}, {name = "crystal tool implementations", event = "FileType", pattern = "crystal", key = "<Leader>ki", mode = "n", run = _34_}, {name = "docr info", event = "FileType", pattern = "crystal", key = "<Leader>k", mode = {"n", "v"}, run = _37_}, {name = "docr search", event = "FileType", pattern = "crystal", key = "<Leader>K", mode = {"n", "v"}, run = _40_}, {name = "docr tree", event = "FileType", pattern = "crystal", key = "<Leader>kk", mode = {"n", "v"}, run = _43_}}
 local M = {}
 M.setup = function(_config)
   for _, item in ipairs(items) do
